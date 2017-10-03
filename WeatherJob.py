@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 import requests
 import logging
 
 from GetConfig import GetConfigParam
+from DBConnection.DatabaseConnection import PostgresConnection
 
 logging.basicConfig(filename='WeatherData.log', level=logging.DEBUG,
                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
@@ -10,11 +12,12 @@ CONFIG_FILENAME = 'config.cfg'
 
 
 def get_weather_data(**data):
-	url = data['url'] + '/data/2.5/weather?q=' + data['city'] + '&' + 'units=' + data['units'] + '&' + 'appid=' + data['api_key']
+	url = data['url'] + '/data/2.5/weather?q=' + data['city'] + '&' + 'units=' +\
+	      data['units'] + '&' + 'appid=' + data['api_key']
 
 	response = requests.post(url)
 	response_json = response.json()
-	logging.debug(str(response_json))
+	logging.debug("Response : " + str(response_json))
 	return {
 		'cloudiness': response_json['clouds']['all'],
 		'city': response_json['name'],
@@ -34,16 +37,19 @@ def get_weather_data(**data):
 	}
 
 
-def get_config_param(cfg):
-	return {
-		'city': cfg.get_config_parameter('API', 'city'),
-		'url': cfg.get_config_parameter('API', 'url'),
-		'api_key': cfg.get_config_parameter('API', 'api_key'),
-		'units': cfg.get_config_parameter('API', 'units')
-	}
+def execute_query(query, params, args=()):
+	with PostgresConnection(params, query, args) as ps:
+		return ps
 
 if __name__ == '__main__':
+	logging.debug("Weather data saving process start")
 	cfg = GetConfigParam(CONFIG_FILENAME)
-	config_param = get_config_param(cfg)
-	x = get_weather_data(**config_param)
-	print(str(x))
+	api_param = cfg.get_config_parameter('API')
+	database_param = cfg.get_config_parameter('Database')
+	weather_data = get_weather_data(**api_param)
+	query = "insert into weather_data (city, humidity, weather_description, wind_speed, visibility, sunrise, sunset," \
+	        " cloudiness, temp, pressure, wind_deg, rain, snow)" \
+	        " values (%(city)s, %(humidity)s, %(weather_description)s, %(wind_speed)s, %(visibility)s," \
+			" to_timestamp(%(sunrise)s), to_timestamp(%(sunset)s), %(cloudiness)s, %(temp)s, %(pressure)s, %(wind_deg)s, %(rain)s, %(snow)s)"
+	execute_query(query, database_param, weather_data)
+	logging.debug("Weather data saving process finished")

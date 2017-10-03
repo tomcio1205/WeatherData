@@ -6,10 +6,10 @@ class GetConfigParam(object):
 		self.parser = configparser.ConfigParser()
 		self.parser.read(file_name)
 
-	def get_config_parameter(self, section, option):
-		try:
-			opt = self.parser.get(section, option)
-			return opt
-		except configparser.NoOptionError:
-			print("That option not exist")
-			return 0
+	def get_config_parameter(self, section):
+		options = self.parser.options(section)
+		ret_options = {}
+		for option in options:
+			ret_options[option] = self.parser.get(section, option)
+		return ret_options
+
