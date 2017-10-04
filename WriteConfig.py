@@ -4,9 +4,10 @@ config = configparser.RawConfigParser()
 
 
 config.add_section('API')
-config.set('API', 'api_key', 'df454cc4c5f8ce4a')
-config.set('API', 'url', 'http://api.wunderground.com/api/')
+config.set('API', 'api_key', '4a0d3cc607e3f12cae449fdb8f1c9d20')
+config.set('API', 'url', 'http://api.openweathermap.org')
 config.set('API', 'city', 'Rzeszow')
+config.set('API', 'units', 'metric')
 
 config.add_section('Database')
 config.set('Database', 'db_name', 'weather_data')
